@@ -58,7 +58,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     const emblaRoot = emblaApi.rootNode()
     const root = (options.rootNode && options.rootNode(emblaRoot)) || emblaRoot
 
-    emblaApi.on('pointerDown', clearTimer)
+    emblaApi.on('pointerDown', stopTimer)
 
     if (!options.stopOnInteraction) {
       emblaApi.on('pointerUp', startTimer)
@@ -67,7 +67,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     if (options.stopOnMouseEnter) {
       eventStore.add(root, 'mouseenter', () => {
         resume = false
-        clearTimer()
+        stopTimer()
       })
 
       if (!options.stopOnInteraction) {
@@ -79,7 +79,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     }
 
     if (options.stopOnFocusIn) {
-      eventStore.add(root, 'focusin', clearTimer)
+      eventStore.add(root, 'focusin', stopTimer)
 
       if (!options.stopOnInteraction) {
         eventStore.add(root, 'focusout', startTimer)
@@ -89,7 +89,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     eventStore.add(ownerDocument, 'visibilitychange', () => {
       if (ownerDocument.visibilityState === 'hidden') {
         resume = playing
-        return clearTimer()
+        return stopTimer()
       }
 
       if (resume) startTimer()
@@ -104,9 +104,9 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     destroyed = true
     playing = false
     emblaApi.off('init', startTimer).off('reInit', startTimer)
-    emblaApi.off('pointerDown', clearTimer)
+    emblaApi.off('pointerDown', stopTimer)
     if (!options.stopOnInteraction) emblaApi.off('pointerUp', startTimer)
-    clearTimer()
+    stopTimer()
     cancelAnimationFrame(animationFrame)
     animationFrame = 0
   }
@@ -121,7 +121,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     playing = true
   }
 
-  function clearTimer(): void {
+  function stopTimer(): void {
     if (destroyed) return
     if (playing) emblaApi.emit('autoplay:stop')
     const { ownerWindow } = emblaApi.internalEngine()
@@ -137,7 +137,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
   }
 
   function stop(): void {
-    if (playing) clearTimer()
+    if (playing) stopTimer()
   }
 
   function reset(): void {
@@ -155,7 +155,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
       const lastIndex = emblaApi.scrollSnapList().length - 1
       const kill = options.stopOnLastSnap && nextIndex === lastIndex
 
-      if (kill) clearTimer()
+      if (kill) stopTimer()
 
       if (emblaApi.canScrollNext()) {
         emblaApi.scrollNext(jump)
