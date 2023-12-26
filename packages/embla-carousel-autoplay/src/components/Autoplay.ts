@@ -86,14 +86,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
       }
     }
 
-    eventStore.add(ownerDocument, 'visibilitychange', () => {
-      if (ownerDocument.visibilityState === 'hidden') {
-        resume = playing
-        return stopTimer()
-      }
-
-      if (resume) startTimer()
-    })
+    eventStore.add(ownerDocument, 'visibilitychange', visibilityChange)
 
     if (options.playOnInit) {
       emblaApi.on('init', startTimer).on('reInit', startTimer)
@@ -128,6 +121,17 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     ownerWindow.clearInterval(timer)
     timer = 0
     playing = false
+  }
+
+  function visibilityChange(): void {
+    const { ownerDocument } = emblaApi.internalEngine()
+
+    if (ownerDocument.visibilityState === 'hidden') {
+      resume = playing
+      return stopTimer()
+    }
+
+    if (resume) startTimer()
   }
 
   function play(jumpOverride?: boolean): void {

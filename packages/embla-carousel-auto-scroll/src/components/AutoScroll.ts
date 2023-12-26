@@ -18,7 +18,6 @@ declare module 'embla-carousel/components/EventHandler' {
   }
 }
 
-// TODO: Fix pointerdown and up
 // TODO: Add Ease in and out?
 
 export type AutoScrollType = CreatePluginType<
@@ -35,9 +34,9 @@ export type AutoScrollOptionsType = AutoScrollType['options']
 function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
   let options: OptionsType
   let emblaApi: EmblaCarouselType
-  let active = false
+  let destroyed: boolean
   let playing = false
-  let wasPlaying = false
+  let resume = true
   let timer = 0
   let startDelay: number
   let defaultScrollBehaviour: ScrollBodyType
@@ -47,15 +46,16 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     optionsHandler: OptionsHandlerType
   ): void {
     emblaApi = emblaApiInstance
-    if (emblaApi.scrollSnapList().length <= 1) return
 
     const { mergeOptions, optionsAtMedia } = optionsHandler
     const optionsBase = mergeOptions(defaultOptions, AutoScroll.globalOptions)
     const allOptions = mergeOptions(optionsBase, userOptions)
     options = optionsAtMedia(allOptions)
 
+    if (emblaApi.scrollSnapList().length <= 1) return
+
     startDelay = options.delay
-    active = true
+    destroyed = false
     defaultScrollBehaviour = emblaApi.internalEngine().scrollBody
 
     const { eventStore, ownerDocument } = emblaApi.internalEngine()
@@ -63,13 +63,22 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     const root = (options.rootNode && options.rootNode(emblaRoot)) || emblaRoot
 
     emblaApi.on('pointerDown', stopScroll)
-    // if (!options.stopOnInteraction) emblaApi.on('settle', startScroll)
+
+    if (!options.stopOnInteraction) {
+      emblaApi.on('pointerUp', startScroll)
+    }
 
     if (options.stopOnMouseEnter) {
-      eventStore.add(root, 'mouseenter', stopScroll)
+      eventStore.add(root, 'mouseenter', () => {
+        resume = false
+        stopScroll()
+      })
 
       if (!options.stopOnInteraction) {
-        eventStore.add(root, 'mouseleave', startScroll)
+        eventStore.add(root, 'mouseleave', () => {
+          resume = true
+          startScroll()
+        })
       }
     }
 
@@ -89,16 +98,17 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
   }
 
   function destroy(): void {
-    active = false
+    destroyed = true
     playing = false
     emblaApi.off('init', startScroll).off('reInit', startScroll)
     emblaApi.off('pointerDown', stopScroll)
-    // if (!options.stopOnInteraction) emblaApi.off('pointerUp', startTimer)
+    if (!options.stopOnInteraction) emblaApi.off('pointerUp', startScroll)
     stopScroll()
   }
 
   function startScroll(): void {
-    if (!active || playing) return
+    if (destroyed || playing) return
+    if (!resume) return
     emblaApi.emit('autoScroll:play')
 
     const engine = emblaApi.internalEngine()
@@ -113,7 +123,7 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
   }
 
   function stopScroll(): void {
-    if (!active || !playing) return
+    if (destroyed || !playing) return
     emblaApi.emit('autoScroll:stop')
 
     const engine = emblaApi.internalEngine()
@@ -130,11 +140,11 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     const { ownerDocument } = emblaApi.internalEngine()
 
     if (ownerDocument.visibilityState === 'hidden') {
-      wasPlaying = playing
+      resume = playing
       return stopScroll()
     }
 
-    if (wasPlaying) startScroll()
+    if (resume) startScroll()
   }
 
   function createAutoScrollBehaviour(engine: EngineType): ScrollBodyType {
@@ -187,6 +197,7 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
 
   function play(delayOverride?: number): void {
     if (typeof delayOverride !== 'undefined') startDelay = delayOverride
+    resume = true
     startScroll()
   }
 
