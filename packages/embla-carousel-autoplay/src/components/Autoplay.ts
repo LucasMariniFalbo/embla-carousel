@@ -96,9 +96,11 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
   function destroy(): void {
     destroyed = true
     playing = false
-    emblaApi.off('init', startTimer).off('reInit', startTimer)
-    emblaApi.off('pointerDown', stopTimer)
-    if (!options.stopOnInteraction) emblaApi.off('pointerUp', startTimer)
+    emblaApi
+      .off('init', startTimer)
+      .off('reInit', startTimer)
+      .off('pointerDown', stopTimer)
+      .off('pointerUp', startTimer)
     stopTimer()
     cancelAnimationFrame(animationFrame)
     animationFrame = 0

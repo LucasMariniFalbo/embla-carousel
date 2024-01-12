@@ -3,7 +3,7 @@ import { CreateOptionsType } from 'embla-carousel/components/Options'
 export type OptionsType = CreateOptionsType<{
   direction: 'forward' | 'backward'
   speed: number
-  delay: number
+  startDelay: number
   playOnInit: boolean
   stopOnFocusIn: boolean
   stopOnInteraction: boolean
@@ -13,8 +13,8 @@ export type OptionsType = CreateOptionsType<{
 
 export const defaultOptions: OptionsType = {
   direction: 'forward',
-  speed: 1,
-  delay: 1000,
+  speed: 2,
+  startDelay: 1000,
   active: true,
   breakpoints: {},
   playOnInit: true,

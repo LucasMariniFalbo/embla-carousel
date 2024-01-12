@@ -1,6 +1,6 @@
 {
   "name": "embla-carousel-auto-scroll",
-  "version": "8.0.0-rc14",
+  "version": "8.0.0-rc19",
   "author": "David Jerleke",
   "description": "An auto scroll plugin for Embla Carousel",
   "repository": {
@@ -23,7 +23,8 @@
     "typescript",
     "react",
     "vue",
-    "svelte"
+    "svelte",
+    "solid"
   ],
   "main": "embla-carousel-auto-scroll.umd.js",
   "unpkg": "embla-carousel-auto-scroll.umd.js",
@@ -40,7 +41,7 @@
   "scripts": {
     "test": "echo \"Info: no tests specified\" && exit 0",
     "build": "rollup --bundleConfigAsCjs -c",
-    "start": "rollup --bundleConfigAsCjs -c --watch",
+    "start": "rollup --bundleConfigAsCjs -c --watch --environment BUILD:development",
     "eslint:report": "eslint \"src/**/*.{js,tsx,ts}\""
   },
   "devDependencies": {
@@ -58,7 +59,7 @@
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
-    "embla-carousel": "8.0.0-rc14"
+    "embla-carousel": "8.0.0-rc19"
   },
   "exports": {
     "./package.json": "./package.json",

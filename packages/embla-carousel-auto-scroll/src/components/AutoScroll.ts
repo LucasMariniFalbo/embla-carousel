@@ -18,8 +18,6 @@ declare module 'embla-carousel/components/EventHandler' {
   }
 }
 
-// TODO: Add Ease in and out?
-
 export type AutoScrollType = CreatePluginType<
   {
     play: (delay?: number) => void
@@ -54,18 +52,18 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
 
     if (emblaApi.scrollSnapList().length <= 1) return
 
-    startDelay = options.delay
+    startDelay = options.startDelay
     destroyed = false
     defaultScrollBehaviour = emblaApi.internalEngine().scrollBody
 
-    const { eventStore, ownerDocument } = emblaApi.internalEngine()
+    const { eventStore } = emblaApi.internalEngine()
     const emblaRoot = emblaApi.rootNode()
     const root = (options.rootNode && options.rootNode(emblaRoot)) || emblaRoot
 
     emblaApi.on('pointerDown', stopScroll)
 
     if (!options.stopOnInteraction) {
-      emblaApi.on('pointerUp', startScroll)
+      emblaApi.on('pointerUp', startScrollOnSettle)
     }
 
     if (options.stopOnMouseEnter) {
@@ -83,14 +81,15 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     }
 
     if (options.stopOnFocusIn) {
-      eventStore.add(root, 'focusin', stopScroll)
+      eventStore.add(root, 'focusin', () => {
+        stopScroll()
+        emblaApi.scrollTo(emblaApi.selectedScrollSnap(), true)
+      })
 
       if (!options.stopOnInteraction) {
         eventStore.add(root, 'focusout', startScroll)
       }
     }
-
-    eventStore.add(ownerDocument, 'visibilitychange', visibilityChange)
 
     if (options.playOnInit) {
       emblaApi.on('init', startScroll).on('reInit', startScroll)
@@ -100,9 +99,12 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
   function destroy(): void {
     destroyed = true
     playing = false
-    emblaApi.off('init', startScroll).off('reInit', startScroll)
-    emblaApi.off('pointerDown', stopScroll)
-    if (!options.stopOnInteraction) emblaApi.off('pointerUp', startScroll)
+    emblaApi
+      .off('init', startScroll)
+      .off('reInit', startScroll)
+      .off('pointerDown', stopScroll)
+      .off('pointerUp', startScrollOnSettle)
+      .off('settle', onSettle)
     stopScroll()
   }
 
@@ -136,19 +138,25 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     playing = false
   }
 
-  function visibilityChange(): void {
-    const { ownerDocument } = emblaApi.internalEngine()
-
-    if (ownerDocument.visibilityState === 'hidden') {
-      resume = playing
-      return stopScroll()
-    }
-
+  function onSettle(): void {
     if (resume) startScroll()
+    emblaApi.off('settle', onSettle)
+  }
+
+  function startScrollOnSettle(): void {
+    emblaApi.on('settle', onSettle)
   }
 
   function createAutoScrollBehaviour(engine: EngineType): ScrollBodyType {
-    const { location, target, scrollTarget, index, indexPrevious } = engine
+    const {
+      location,
+      target,
+      scrollTarget,
+      index,
+      indexPrevious,
+      limit: { reachedMin, reachedMax, constrain },
+      options: { loop }
+    } = engine
     const directionSign = options.direction === 'forward' ? -1 : 1
     const noop = (): ScrollBodyType => self
 
@@ -156,17 +164,17 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     let scrollDirection = 0
     let rawLocation = location.get()
     let rawLocationPrevious = 0
+    let hasSettled = false
 
     function seek(): ScrollBodyType {
       let directionDiff = 0
 
-      bodyVelocity = directionSign
+      bodyVelocity = directionSign * options.speed
       rawLocation += bodyVelocity
       location.add(bodyVelocity)
       target.set(location)
 
       directionDiff = rawLocation - rawLocationPrevious
-
       scrollDirection = Math.sign(directionDiff)
       rawLocationPrevious = rawLocation
 
@@ -178,6 +186,19 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
         emblaApi.emit('select')
       }
 
+      const reachedEnd =
+        options.direction === 'forward'
+          ? reachedMin(location.get())
+          : reachedMax(location.get())
+
+      if (!loop && reachedEnd) {
+        hasSettled = true
+        const constrainedLocation = constrain(location.get())
+        location.set(constrainedLocation)
+        target.set(location)
+        stopScroll()
+      }
+
       return self
     }
 
@@ -185,8 +206,8 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
       direction: () => scrollDirection,
       duration: () => -1,
       velocity: () => bodyVelocity,
+      settled: () => hasSettled,
       seek,
-      settled: () => false,
       useBaseFriction: noop,
       useBaseDuration: noop,
       useFriction: noop,
@@ -204,10 +225,6 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
   function stop(): void {
     if (playing) stopScroll()
   }
-
-  // function reset(): void {
-  //   if (playing) play()
-  // }
 
   function isPlaying(): boolean {
     return playing
