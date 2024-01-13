@@ -14,9 +14,37 @@ It's possible to **extend** Embla carousel with additional features using **plug
 
 ---
 
+## Installation
+
+All **official plugins** are separate **NPM packages**. They're all **prefixed** with `embla-carousel` followed by its **unique** plugin **name**. For example, the `Autoplay` plugin is installed like so:
+
+<Tabs groupId="package-manager">
+  <TabsItem label="CDN" value="cdn">
+
+    ```html
+    <script src="https://unpkg.com/embla-carousel-autoplay/embla-carousel-autoplay.umd.js"></script>
+    ```
+
+  </TabsItem>
+  <TabsItem label="npm" value="npm">
+
+    ```shell
+    npm install embla-carousel-autoplay --save
+    ```
+
+  </TabsItem>
+  <TabsItem label="yarn" value="yarn">
+
+    ```shell
+    yarn add embla-carousel-autoplay
+    ```
+
+  </TabsItem>
+</Tabs>
+
 ## Usage
 
-The Embla Carousel **constructor** accepts an **array of plugins**. Each plugin has its own [options](/api/plugins/#constructor-options) and [methods](/api/plugins/#calling-methods).
+The Embla Carousel **constructor** accepts an **array of plugins**. Each plugin might have its own [options](/api/plugins/#constructor-options), [methods](/api/plugins/#calling-methods) and [events](/api/plugins/#adding-event-listeners).
 
 ### Adding a plugin
 
@@ -25,7 +53,7 @@ The constructor plugin array is the default way of providing plugins to Embla Ca
 <Tabs groupId="library">
   <TabsItem label="Vanilla" value="vanilla">
 
-    ```js highlight={4}
+    ```js highlight={2,4}
     import EmblaCarousel from 'embla-carousel'
     import Autoplay from 'embla-carousel-autoplay'
 
@@ -35,7 +63,7 @@ The constructor plugin array is the default way of providing plugins to Embla Ca
   </TabsItem>
   <TabsItem label="React" value="react">
 
-    ```jsx highlight={5}
+    ```jsx highlight={2,5}
     import useEmblaCarousel from 'embla-carousel-react'
     import Autoplay from 'embla-carousel-autoplay'
 
@@ -48,17 +76,13 @@ The constructor plugin array is the default way of providing plugins to Embla Ca
   </TabsItem>
   <TabsItem label="Vue" value="vue">
 
-    ```html highlight={7}
-    <script>
+    ```html highlight={3,5}
+    <script setup>
       import emblaCarouselVue from 'embla-carousel-vue'
       import Autoplay from 'embla-carousel-autoplay'
 
-      export default {
-        setup() {
-          const [emblaNode] = emblaCarouselVue({ loop: true }, [Autoplay()])
-          // ...
-        }
-      }
+      const [emblaNode] = emblaCarouselVue({ loop: true }, [Autoplay()])
+      // ...
     </script>
     ```
 
@@ -105,19 +129,15 @@ Plugins have their own specific **options** which is the first argument of the p
   </TabsItem>
   <TabsItem label="Vue" value="vue">
 
-    ```html highlight={8}
-    <script>
+    ```html highlight={6}
+    <script setup>
       import emblaCarouselVue from 'embla-carousel-vue'
       import Autoplay from 'embla-carousel-autoplay'
 
-      export default {
-        setup() {
-          const [emblaNode] = emblaCarouselVue({ loop: true }, [
-            Autoplay({ delay: 4000 })
-          ])
-          // ...
-        }
-      }
+      const [emblaNode] = emblaCarouselVue({ loop: true }, [
+        Autoplay({ delay: 4000 })
+      ])
+      // ...
     </script>
     ```
 
@@ -159,18 +179,14 @@ All [official plugins](/plugins/) allows you to set **global options** that will
   <TabsItem label="Vue" value="vue">
 
     ```html highlight={5}
-    <script>
+    <script setup>
       import emblaCarouselVue from 'embla-carousel-vue'
       import Autoplay from 'embla-carousel-autoplay'
 
       Autoplay.globalOptions = { delay: 4000 }
 
-      export default {
-        setup() {
-          const [emblaNode] = emblaCarouselVue({ loop: true }, [Autoplay()])
-          // ...
-        }
-      }
+      const [emblaNode] = emblaCarouselVue({ loop: true }, [Autoplay()])
+      // ...
     </script>
     ```
 
@@ -221,25 +237,21 @@ Additionally, some plugins expose their own **API methods**. You can access plug
   </TabsItem>
   <TabsItem label="Vue" value="vue">
 
-    ```html highlight={13}
-    <script>
+    ```html highlight={11}
+    <script setup>
       import { watchEffect } from 'vue'
       import emblaCarouselVue from 'embla-carousel-vue'
       import Autoplay from 'embla-carousel-autoplay'
 
-      export default {
-        setup() {
-          const [emblaNode, emblaApi] = emblaCarouselVue({ loop: true }, [
-            Autoplay()
-          ])
+      const [emblaNode, emblaApi] = emblaCarouselVue({ loop: true }, [
+        Autoplay()
+      ])
 
-          watchEffect(() => {
-            if (emblaApi.value) emblaApi.value.plugins().autoplay.stop()
-          })
+      watchEffect(() => {
+        if (emblaApi.value) emblaApi.value.plugins().autoplay.stop()
+      })
 
-          // ...
-        }
-      }
+      // ...
     </script>
     ```
 
@@ -294,31 +306,27 @@ Some plugins fire their own **events**. Plugin events are structured as follows 
   </TabsItem>
   <TabsItem label="Vue" value="vue">
 
-    ```html highlight={18}
-    <script>
+    ```html highlight={16}
+    <script setup>
       import { watchEffect, onBeforeUnmount } from 'vue'
       import emblaCarouselVue from 'embla-carousel-vue'
       import Autoplay from 'embla-carousel-autoplay'
 
-      export default {
-        setup() {
-          const [emblaNode, emblaApi] = emblaCarouselVue({ loop: true }, [
-            Autoplay()
-          ])
+      const [emblaNode, emblaApi] = emblaCarouselVue({ loop: true }, [
+        Autoplay()
+      ])
 
-          function logAutoplayStopEvent() {
-            console.log('Autoplay plugin stopped playing!')
-          }
-
-          watchEffect(() => {
-            if (emblaApi.value) {
-              emblaApi.value.on('autoplay:stop', logAutoplayStopEvent) // add
-            }
-          })
-
-          // ...
-        }
+      function logAutoplayStopEvent() {
+        console.log('Autoplay plugin stopped playing!')
       }
+
+      watchEffect(() => {
+        if (emblaApi.value) {
+          emblaApi.value.on('autoplay:stop', logAutoplayStopEvent) // add
+        }
+      })
+
+      // ...
     </script>
     ```
 

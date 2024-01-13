@@ -216,8 +216,10 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     return self
   }
 
-  function play(delayOverride?: number): void {
-    if (typeof delayOverride !== 'undefined') startDelay = delayOverride
+  function play(startDelayOverride?: number): void {
+    if (typeof startDelayOverride !== 'undefined') {
+      startDelay = startDelayOverride
+    }
     resume = true
     startScroll()
   }
