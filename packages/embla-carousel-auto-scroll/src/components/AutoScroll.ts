@@ -22,6 +22,7 @@ export type AutoScrollType = CreatePluginType<
   {
     play: (delay?: number) => void
     stop: () => void
+    reset: () => void
     isPlaying: () => boolean
   },
   OptionsType
@@ -228,6 +229,13 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     if (playing) stopScroll()
   }
 
+  function reset(): void {
+    if (playing) {
+      stopScroll()
+      startScrollOnSettle()
+    }
+  }
+
   function isPlaying(): boolean {
     return playing
   }
@@ -239,6 +247,7 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     destroy,
     play,
     stop,
+    reset,
     isPlaying
   }
   return self
