@@ -57,6 +57,7 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     const { eventStore, ownerDocument } = emblaApi.internalEngine()
     const emblaRoot = emblaApi.rootNode()
     const root = (options.rootNode && options.rootNode(emblaRoot)) || emblaRoot
+    const container = emblaApi.containerNode()
 
     emblaApi.on('pointerDown', stopTimer)
 
@@ -79,10 +80,10 @@ function Autoplay(userOptions: AutoplayOptionsType = {}): AutoplayType {
     }
 
     if (options.stopOnFocusIn) {
-      eventStore.add(root, 'focusin', stopTimer)
+      eventStore.add(container, 'focusin', stopTimer)
 
       if (!options.stopOnInteraction) {
-        eventStore.add(root, 'focusout', startTimer)
+        eventStore.add(container, 'focusout', startTimer)
       }
     }
 

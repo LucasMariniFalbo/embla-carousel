@@ -60,6 +60,7 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     const { eventStore } = emblaApi.internalEngine()
     const emblaRoot = emblaApi.rootNode()
     const root = (options.rootNode && options.rootNode(emblaRoot)) || emblaRoot
+    const container = emblaApi.containerNode()
 
     emblaApi.on('pointerDown', stopScroll)
 
@@ -82,13 +83,13 @@ function AutoScroll(userOptions: AutoScrollOptionsType = {}): AutoScrollType {
     }
 
     if (options.stopOnFocusIn) {
-      eventStore.add(root, 'focusin', () => {
+      eventStore.add(container, 'focusin', () => {
         stopScroll()
         emblaApi.scrollTo(emblaApi.selectedScrollSnap(), true)
       })
 
       if (!options.stopOnInteraction) {
-        eventStore.add(root, 'focusout', startScroll)
+        eventStore.add(container, 'focusout', startScroll)
       }
     }
 
